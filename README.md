@@ -4,7 +4,7 @@ Aplicación web para **registrar, aprobar, cancelar y pagar gastos** de una
 empresa, manteniendo el control sobre las cuentas bancarias y el flujo
 financiero, con **auditoría completa** de cada cambio de estado.
 
-> Entrega de prueba técnica — nivel Semi Senior / Senior.
+> Entrega de prueba técnica
 > Stack: **Python · Flask · SQLAlchemy · PostgreSQL · Bootstrap 5 · Chart.js**.
 
 ---
