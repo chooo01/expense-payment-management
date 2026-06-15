@@ -1,36 +1,17 @@
-"""REST API — Bank accounts (read-only).
-
-Endpoints
----------
-GET /api/bank-accounts
-GET /api/bank-accounts/<id>   (includes recent movements)
-
-Example response (GET /api/bank-accounts/2)::
-
-    {
-      "id": 2,
-      "account_name": "Cuenta Operativa",
-      "bank_name": "BBVA",
-      "account_number": "********4321",
-      "current_balance": 90000.00,
-      "active": true,
-      "movements": [
-        {
-          "id": 5,
-          "movement_type": "DEBIT",
-          "amount": 10000.00,
-          "balance_after": 90000.00,
-          "description": "Pago PAY-2026-000001 (gasto EXP-2026-000001)",
-          "created_at": "2026-06-15T13:00:00+00:00"
-        }
-      ]
-    }
-"""
+"""REST API — Bank accounts (read + write, documented with APIFairy)."""
 from __future__ import annotations
 
-from flask import Blueprint, jsonify
-from flask_login import login_required
+from apifairy import authenticate, body, other_responses, response
+from flask import Blueprint
 
+from api.security import token_auth
+from schemas.bank_account import (
+    BankAccountCreateSchema,
+    BankAccountDetailSchema,
+    BankAccountListSchema,
+    BankAccountSchema,
+)
+from schemas.common import ErrorSchema, ValidationErrorSchema
 from services.bank_account_service import BankAccountService
 
 bank_account_api = Blueprint(
@@ -38,24 +19,46 @@ bank_account_api = Blueprint(
 )
 service = BankAccountService()
 
+_AUTH_ERR = ["Token inválido o ausente.", ErrorSchema]
+_NOT_FOUND = ["Cuenta bancaria no encontrada.", ErrorSchema]
+_VALIDATION = ["Datos de entrada inválidos.", ValidationErrorSchema]
 
+
+# --- Reads ------------------------------------------------------------------
 @bank_account_api.route("", methods=["GET"])
-@bank_account_api.route("/", methods=["GET"])
-@login_required
+@authenticate(token_auth)
+@response(BankAccountListSchema)
+@other_responses({401: _AUTH_ERR})
 def list_accounts():
+    """Listar cuentas bancarias (número enmascarado)."""
     accounts = service.list_accounts()
-    return jsonify(
-        {
-            "count": len(accounts),
-            "data": [a.to_dict() for a in accounts],
-        }
-    )
+    return {"count": len(accounts), "data": accounts}
 
 
 @bank_account_api.route("/<int:account_id>", methods=["GET"])
-@login_required
-def get_account(account_id: int):
-    account = service.get_or_404(account_id)
-    data = account.to_dict()
-    data["movements"] = [m.to_dict() for m in service.get_movements(account_id)]
-    return jsonify(data)
+@authenticate(token_auth)
+@response(BankAccountDetailSchema)
+@other_responses({401: _AUTH_ERR, 404: _NOT_FOUND})
+def get_account(account_id):
+    """Obtener una cuenta por id (incluye su ledger de movimientos)."""
+    return service.get_or_404(account_id)
+
+
+# --- Writes -----------------------------------------------------------------
+@bank_account_api.route("", methods=["POST"])
+@authenticate(token_auth)
+@body(BankAccountCreateSchema)
+@response(BankAccountSchema, status_code=201, description="Cuenta bancaria creada.")
+@other_responses({400: _VALIDATION, 401: _AUTH_ERR, 422: ["Datos inválidos o número duplicado.", ErrorSchema]})
+def create_account(data):
+    """Crear cuenta bancaria.
+
+    Si el saldo inicial es mayor que 0, se registra un movimiento `CREDIT`
+    inicial en el ledger.
+    """
+    return service.create_account(
+        account_name=data["account_name"],
+        bank_name=data["bank_name"],
+        account_number=data["account_number"],
+        initial_balance=data.get("initial_balance", 0),
+    )

@@ -121,6 +121,13 @@ class Config:
     # --- Logging ------------------------------------------------------------
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 
+    # --- API documentation (APIFairy / OpenAPI) -----------------------------
+    APIFAIRY_TITLE = "ExpensePay API"
+    APIFAIRY_VERSION = "1.0.0"
+    APIFAIRY_UI = "swagger_ui"          # Swagger UI served at /docs
+    APIFAIRY_UI_PATH = "/docs"
+    APIFAIRY_APISPEC_PATH = "/openapi.json"
+
     # --- Seed ---------------------------------------------------------------
     SEED_ADMIN_USERNAME = os.getenv("SEED_ADMIN_USERNAME", "admin")
     SEED_ADMIN_PASSWORD = os.getenv("SEED_ADMIN_PASSWORD", "Admin123*")

@@ -9,6 +9,7 @@ from .bank_account_service import BankAccountService
 from .dashboard_service import DashboardService
 from .expense_service import ExpenseService
 from .payment_service import PaymentService
+from .token_service import TokenService
 
 __all__ = [
     "AuthService",
@@ -17,4 +18,5 @@ __all__ = [
     "DashboardService",
     "ExpenseService",
     "PaymentService",
+    "TokenService",
 ]

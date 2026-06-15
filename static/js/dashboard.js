@@ -23,7 +23,14 @@
   };
 
   async function loadDashboard() {
-    const res = await fetch("/api/dashboard", { headers: { Accept: "application/json" } });
+    // The API is protected with a Bearer token; the page injects one for the
+    // logged-in user via window.API_TOKEN.
+    const res = await fetch("/api/dashboard", {
+      headers: {
+        Accept: "application/json",
+        Authorization: "Bearer " + (window.API_TOKEN || ""),
+      },
+    });
     if (!res.ok) {
       console.error("No se pudo cargar el dashboard:", res.status);
       return;

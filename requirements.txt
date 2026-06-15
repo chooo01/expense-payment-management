@@ -12,6 +12,17 @@ python-dotenv==1.0.1         # Load environment variables from .env
 gunicorn==22.0.0             # Production WSGI server (Render)
 
 # ---------------------------------------------------------------------------
+# API documentation — OpenAPI/Swagger via APIFairy
+# ---------------------------------------------------------------------------
+APIFairy==1.5.1              # OpenAPI generator + Swagger UI/Redoc at /docs
+marshmallow==4.3.0           # Serialization / validation schemas
+flask-marshmallow==1.5.0     # Flask integration for marshmallow
+marshmallow-sqlalchemy==1.5.0  # Silences flask-marshmallow SQLAlchemy notice
+webargs==8.7.1               # Request parsing used by APIFairy
+Flask-HTTPAuth==4.8.1        # Bearer token auth for the REST API
+apispec==6.10.0              # OpenAPI spec builder
+
+# ---------------------------------------------------------------------------
 # Development / testing dependencies
 # ---------------------------------------------------------------------------
 pytest==8.2.2                # Test runner

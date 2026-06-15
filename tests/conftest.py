@@ -46,10 +46,18 @@ def admin_user(app):
 
 @pytest.fixture()
 def auth_client(app, admin_user):
-    """A test client with an active logged-in session."""
+    """A test client with an active logged-in (web session) login."""
     c = app.test_client()
     c.post("/login", data={"username": "admin", "password": "Admin123*"})
     return c
+
+
+@pytest.fixture()
+def api_headers(admin_user):
+    """Authorization header carrying a valid Bearer token for the admin user."""
+    from services.token_service import TokenService
+
+    return {"Authorization": "Bearer " + TokenService().generate(admin_user.id)}
 
 
 @pytest.fixture()

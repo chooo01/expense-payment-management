@@ -17,7 +17,10 @@
       "Bash(curl -s -c j.txt -d \"username=admin&password=Admin123*\" -o /dev/null -w \"login -> HTTP %{http_code}\\\\n\" -L http://127.0.0.1:5058/login)",
       "Bash(curl -s -b j.txt http://127.0.0.1:5058/api/dashboard)",
       "Bash(./.venv/Scripts/python.exe -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d['kpis'], indent=2\\)\\); print\\('bank accounts:', [a['account_name'] for a in d['bank_accounts']]\\)\")",
-      "Bash(kill %1)"
+      "Bash(kill %1)",
+      "Bash(./.venv/Scripts/python.exe -m pip install --quiet marshmallow-sqlalchemy)",
+      "Bash(./.venv/Scripts/python.exe -c \"import marshmallow as m; from marshmallow import fields; print\\('marshmallow', m.__version__\\); print\\('Tuple field:', hasattr\\(fields, 'Tuple'\\)\\)\")",
+      "Bash(./.venv/Scripts/python.exe -m pip show marshmallow-sqlalchemy)"
     ]
   }
 }

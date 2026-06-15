@@ -36,7 +36,7 @@ financiero, con **auditoría completa** de cada cambio de estado.
 - **Cuentas bancarias** con validación de saldo y **ledger de movimientos**.
 - **Auditoría** inmutable de todas las transiciones de estado.
 - **Dashboard ejecutivo** con KPIs y 4 gráficas (Chart.js).
-- **API REST** documentada (solo lectura) para integración.
+- **API REST** (lectura y escritura) documentada con **OpenAPI/Swagger** en `/docs` (APIFairy).
 - **Autenticación** por sesión con contraseñas **bcrypt**.
 - **Soft delete**, manejo centralizado de errores y logging estructurado.
 
@@ -161,14 +161,42 @@ movimientos"*).
 
 ## 🔌 API REST
 
-Todos los endpoints son **GET** (solo lectura), requieren **sesión
-autenticada** y responden JSON. Sin sesión → `401 {"error": ...}`.
+La API está documentada con **APIFairy**, que genera automáticamente una
+especificación **OpenAPI 3.0** y la expone como **Swagger UI**:
+
+| Recurso | URL |
+|---------|-----|
+| **Swagger UI** | `/docs` (p. ej. `https://mi-api.onrender.com/docs`) |
+| **OpenAPI JSON** | `/openapi.json` |
+
+**Autenticación (Bearer token):** todos los endpoints de consulta requieren un
+token. Se obtiene en `POST /api/tokens` y se envía como
+`Authorization: Bearer <token>`. En Swagger UI pulsa **Authorize** y pega el
+token. Sin token → `401 {"error": ...}`.
+
+```
+POST /api/tokens                 # body: {"username","password"} -> {token,...}
+```
+
+`POST /api/tokens` →
+```json
+{ "token": "eyJ1aWQiOjF9...firmado", "token_type": "Bearer", "expires_in": 3600 }
+```
+
+> Implementación: schemas Marshmallow en `schemas/`, decoradores APIFairy
+> (`@body`, `@arguments`, `@response`, `@other_responses`, `@authenticate`) en
+> `api/`, y auth Bearer stateless en `services/token_service.py` +
+> `api/security.py`. Detalle completo en
+> [`docs/04-api-documentation.md`](docs/04-api-documentation.md).
 
 ### Gastos
 
 ```
-GET /api/expenses                # lista (?status=PENDING|APPROVED|CANCELLED|PAID)
-GET /api/expenses/{id}           # detalle + pagos
+GET  /api/expenses                # lista (?status=PENDING|APPROVED|CANCELLED|PAID)
+GET  /api/expenses/{id}           # detalle + pagos
+POST /api/expenses                # crear (body: description, amount) -> 201
+POST /api/expenses/{id}/approve   # aprobar
+POST /api/expenses/{id}/cancel    # cancelar
 ```
 
 `GET /api/expenses` →
@@ -192,8 +220,12 @@ GET /api/expenses/{id}           # detalle + pagos
 ### Pagos
 
 ```
-GET /api/payments                # (?status=... &expense_id=...)
-GET /api/payments/{id}
+GET  /api/payments                # (?status=... &expense_id=...)
+GET  /api/payments/{id}
+POST /api/payments                # generar (body: expense_id, bank_account_id, amount) -> 201
+POST /api/payments/{id}/approve   # aprobar
+POST /api/payments/{id}/pay       # marcar pagado (descuenta saldo)
+POST /api/payments/{id}/cancel    # cancelar (revierte saldo si estaba pagado)
 ```
 
 `GET /api/payments/1` →
@@ -211,8 +243,9 @@ GET /api/payments/{id}
 ### Cuentas bancarias
 
 ```
-GET /api/bank-accounts
-GET /api/bank-accounts/{id}      # incluye movimientos del ledger
+GET  /api/bank-accounts
+GET  /api/bank-accounts/{id}      # incluye movimientos del ledger
+POST /api/bank-accounts           # crear (body: account_name, bank_name, account_number, initial_balance) -> 201
 ```
 
 `GET /api/bank-accounts/2` →

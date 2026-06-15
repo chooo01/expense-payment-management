@@ -87,5 +87,6 @@
 {% endblock %}
 
 {% block scripts %}
+<script>window.API_TOKEN = "{{ api_token }}";</script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

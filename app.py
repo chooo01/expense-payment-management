@@ -12,6 +12,7 @@ CLI commands:
 from __future__ import annotations
 
 import click
+from apifairy import APIFairy
 from flask import Flask, jsonify
 
 from api import register_api
@@ -25,6 +26,9 @@ from middleware import (
 )
 from routes import register_routes
 from services.auth_service import bcrypt
+
+# OpenAPI/Swagger generator (unbound; wired up in the factory).
+apifairy = APIFairy()
 
 
 def create_app(config_object=None) -> Flask:
@@ -50,6 +54,62 @@ def create_app(config_object=None) -> Flask:
     # --- Blueprints ---------------------------------------------------------
     register_routes(app)   # server-rendered pages
     register_api(app)      # JSON REST API
+
+    # --- OpenAPI / Swagger (served at /docs, spec at /openapi.json) ----------
+    apifairy.init_app(app)
+
+    @apifairy.process_apispec
+    def enrich_spec(spec: dict) -> dict:
+        """Add professional metadata + clean tag names to the OpenAPI document."""
+        spec["info"]["description"] = (
+            "API REST de **ExpensePay** — gestión de gastos y pagos "
+            "empresariales.\n\n"
+            "**Autenticación:** obtén un token en `POST /api/tokens` "
+            "(usuario/contraseña) y pulsa **Authorize** para enviarlo como "
+            "`Bearer`. Todos los endpoints de consulta lo requieren.\n\n"
+            "Las cantidades monetarias están en MXN."
+        )
+        spec["info"]["contact"] = {"name": "ExpensePay", "email": "soporte@expensepay.example"}
+        spec.setdefault("externalDocs", {
+            "description": "Documentación funcional y de base de datos",
+            "url": "https://github.com/chooo01/expense-payment-management/tree/master/docs",
+        })
+
+        # Map APIFairy's blueprint-derived tags (e.g. "Expense_Api") to clean,
+        # ordered section names shown in Swagger UI.
+        friendly = {
+            "tokenapi": ("Autenticación", "Emisión de tokens de acceso (login)."),
+            "expenseapi": ("Gastos", "Consulta de gastos y su ciclo de vida."),
+            "paymentapi": ("Pagos", "Consulta de pagos."),
+            "bankaccountapi": ("Cuentas Bancarias", "Cuentas y su ledger de movimientos."),
+            "dashboardapi": ("Dashboard", "KPIs y series para gráficas."),
+        }
+
+        def normalize(tag: str) -> str:
+            return "".join(ch for ch in tag.lower() if ch.isalnum())
+
+        used: list[str] = []
+        for path_item in spec.get("paths", {}).values():
+            for operation in path_item.values():
+                if not isinstance(operation, dict) or "tags" not in operation:
+                    continue
+                new_tags = []
+                for tag in operation["tags"]:
+                    name = friendly.get(normalize(tag), (tag, ""))[0]
+                    new_tags.append(name)
+                    if name not in used:
+                        used.append(name)
+                operation["tags"] = new_tags
+
+        # Order the top-level tag list (controls section order in Swagger UI).
+        order = ["Autenticación", "Gastos", "Pagos", "Cuentas Bancarias", "Dashboard"]
+        descriptions = {v[0]: v[1] for v in friendly.values()}
+        spec["tags"] = [
+            {"name": name, "description": descriptions.get(name, "")}
+            for name in order
+            if name in used
+        ]
+        return spec
 
     # --- Cross-cutting ------------------------------------------------------
     register_request_logging(app)
