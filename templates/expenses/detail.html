@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% from "partials/_macros.html" import status_badge, money %}
+{% block title %}{{ expense.folio }} · ExpensePay{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0"><i class="bi bi-receipt text-primary"></i> {{ expense.folio }}</h1>
+  <a href="{{ url_for('expenses.list_expenses') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+
+<div class="row g-3">
+  <!-- Summary + actions -->
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <h5 class="card-title mb-1">Detalle del gasto</h5>
+          {{ status_badge(expense.status.value) }}
+        </div>
+        <p class="text-muted">{{ expense.description }}</p>
+        <div class="row text-center">
+          <div class="col"><div class="small text-muted">Monto</div><div class="fw-bold">{{ money(expense.amount) }}</div></div>
+          <div class="col"><div class="small text-muted">Pagado</div><div class="fw-bold text-success">{{ money(expense.paid_amount()) }}</div></div>
+          <div class="col"><div class="small text-muted">Pendiente</div><div class="fw-bold text-danger">{{ money(expense.remaining_amount()) }}</div></div>
+        </div>
+        <hr>
+        <div class="d-flex flex-wrap gap-2">
+          {% if expense.status.value == 'PENDING' %}
+            <form method="post" action="{{ url_for('expenses.approve', expense_id=expense.id) }}">
+              <button class="btn btn-info"><i class="bi bi-check2-circle"></i> Aprobar</button>
+            </form>
+          {% endif %}
+          {% if expense.status.value == 'APPROVED' and expense.remaining_amount() > 0 %}
+            <a href="{{ url_for('payments.generate', expense_id=expense.id) }}" class="btn btn-success">
+              <i class="bi bi-cash-stack"></i> Generar Pago</a>
+          {% endif %}
+          {% if expense.status.value in ['PENDING', 'APPROVED'] %}
+            <form method="post" action="{{ url_for('expenses.cancel', expense_id=expense.id) }}"
+                  onsubmit="return confirm('¿Cancelar este gasto? Esta acción no se puede revertir.');">
+              <button class="btn btn-outline-danger"><i class="bi bi-x-circle"></i> Cancelar</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Payments -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Pagos asociados</div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead class="table-light"><tr>
+            <th>Folio</th><th class="text-end">Monto</th><th>Estado</th><th></th>
+          </tr></thead>
+          <tbody>
+            {% for p in expense.payments %}
+            <tr>
+              <td>{{ p.payment_folio }}</td>
+              <td class="text-end">{{ money(p.amount) }}</td>
+              <td>{{ status_badge(p.status.value) }}</td>
+              <td class="text-end"><a href="{{ url_for('payments.detail', payment_id=p.id) }}"
+                  class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted py-3">Sin pagos.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit timeline -->
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-clock-history"></i> Historial de estados</div>
+      <ul class="list-group list-group-flush">
+        {% for h in history %}
+        <li class="list-group-item">
+          <div class="d-flex justify-content-between">
+            <span>
+              {{ status_badge(h.previous_status) if h.previous_status }}
+              {% if h.previous_status %}<i class="bi bi-arrow-right mx-1"></i>{% endif %}
+              {{ status_badge(h.new_status) }}
+            </span>
+            <small class="text-muted">{{ h.changed_at.strftime('%Y-%m-%d %H:%M') }}</small>
+          </div>
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted">Sin historial.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

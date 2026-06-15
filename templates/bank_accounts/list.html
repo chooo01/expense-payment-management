@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "partials/_macros.html" import money %}
+{% block title %}Cuentas Bancarias · ExpensePay{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0"><i class="bi bi-bank text-primary"></i> Cuentas Bancarias</h1>
+  <a href="{{ url_for('bank_accounts.create_account') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg"></i> Nueva Cuenta</a>
+</div>
+
+<div class="row g-3">
+  {% for a in accounts %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <h5 class="card-title mb-0">{{ a.account_name }}</h5>
+          {% if a.active %}<span class="badge bg-success">Activa</span>
+          {% else %}<span class="badge bg-secondary">Inactiva</span>{% endif %}
+        </div>
+        <div class="text-muted small">{{ a.bank_name }} · {{ a._masked_number() }}</div>
+        <div class="display-6 fw-bold my-2">{{ money(a.current_balance) }}</div>
+        <a href="{{ url_for('bank_accounts.detail', account_id=a.id) }}"
+           class="btn btn-sm btn-outline-primary"><i class="bi bi-list-ul"></i> Movimientos</a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12"><div class="alert alert-info">No hay cuentas registradas.</div></div>
+  {% endfor %}
+</div>
+{% endblock %}

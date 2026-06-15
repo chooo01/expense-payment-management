@@ -1,0 +1,34 @@
+# ===========================================================================
+# Render Blueprint — provisions a free web service + free PostgreSQL database.
+# Deploy with: Render Dashboard -> New -> Blueprint -> point to this repo.
+# ===========================================================================
+databases:
+  - name: expensepay-db
+    plan: free
+    databaseName: expensepay
+    user: expensepay
+
+services:
+  - type: web
+    name: expensepay
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    # gunicorn serves wsgi:app; wsgi.py runs create_all() on first boot.
+    startCommand: "gunicorn wsgi:app --workers 2 --timeout 60"
+    healthCheckPath: /healthz
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true          # Render generates a strong random value.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: expensepay-db
+          property: connectionString
+      - key: SEED_ADMIN_USERNAME
+        sync: false                   # Set in the dashboard.
+      - key: SEED_ADMIN_PASSWORD
+        sync: false                   # Set in the dashboard (secret).
+      - key: LOG_LEVEL
+        value: INFO

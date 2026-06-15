@@ -1,0 +1,21 @@
+{# Shared Jinja macros. #}
+
+{# Maps a status string to a Bootstrap badge colour. #}
+{% macro status_badge(status) %}
+  {% set colors = {
+    'PENDING': 'warning text-dark',
+    'APPROVED': 'info text-dark',
+    'PAID': 'success',
+    'CANCELLED': 'secondary'
+  } %}
+  {% set labels = {
+    'PENDING': 'Pendiente',
+    'APPROVED': 'Aprobado',
+    'PAID': 'Pagado',
+    'CANCELLED': 'Cancelado'
+  } %}
+  <span class="badge bg-{{ colors.get(status, 'light text-dark') }}">{{ labels.get(status, status) }}</span>
+{% endmacro %}
+
+{# Formats a number as MXN currency. #}
+{% macro money(value) %}${{ '{:,.2f}'.format(value|float) }}{% endmacro %}

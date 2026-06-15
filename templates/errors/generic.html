@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Error · ExpensePay{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
+  <h1 class="h3 mt-3">Ha ocurrido un error</h1>
+  <p class="text-muted">
+    {{ error.description if error.description is defined else 'Error interno del servidor.' }}
+  </p>
+  <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">Ir al Dashboard</a>
+</div>
+{% endblock %}

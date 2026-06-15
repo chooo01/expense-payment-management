@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Nuevo Gasto · ExpensePay{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <h1 class="h3 mb-3"><i class="bi bi-plus-circle text-primary"></i> Nuevo Gasto</h1>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <form method="post" action="{{ url_for('expenses.create_expense') }}">
+          <div class="mb-3">
+            <label for="description" class="form-label">Descripción</label>
+            <textarea class="form-control" id="description" name="description" rows="3"
+                      required maxlength="500"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="amount" class="form-label">Monto (MXN)</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" step="0.01" min="0.01" class="form-control"
+                     id="amount" name="amount" required>
+            </div>
+            <div class="form-text">El gasto se creará en estado <strong>Pendiente</strong>.</div>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button>
+            <a href="{{ url_for('expenses.list_expenses') }}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

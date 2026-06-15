@@ -1,0 +1,18 @@
+# ---------------------------------------------------------------------------
+# Production dependencies
+# ---------------------------------------------------------------------------
+Flask==3.0.3                 # Web framework / WSGI app
+Flask-SQLAlchemy==3.1.1      # ORM integration (SQLAlchemy 2.x under the hood)
+Flask-Login==0.6.3           # Session-based authentication
+Flask-Bcrypt==1.0.1          # bcrypt password hashing helpers
+Flask-Migrate==4.0.7         # Alembic migrations (schema versioning)
+SQLAlchemy==2.0.31           # Core ORM
+psycopg2-binary==2.9.9       # PostgreSQL driver
+python-dotenv==1.0.1         # Load environment variables from .env
+gunicorn==22.0.0             # Production WSGI server (Render)
+
+# ---------------------------------------------------------------------------
+# Development / testing dependencies
+# ---------------------------------------------------------------------------
+pytest==8.2.2                # Test runner
+pytest-cov==5.0.0            # Coverage reporting

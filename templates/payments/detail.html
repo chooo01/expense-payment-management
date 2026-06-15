@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "partials/_macros.html" import status_badge, money %}
+{% block title %}{{ payment.payment_folio }} · ExpensePay{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0"><i class="bi bi-credit-card text-primary"></i> {{ payment.payment_folio }}</h1>
+  <a href="{{ url_for('payments.list_payments') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <h5 class="card-title mb-2">Detalle del pago</h5>
+          {{ status_badge(payment.status.value) }}
+        </div>
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-muted">Monto</dt><dd class="col-sm-8">{{ money(payment.amount) }}</dd>
+          <dt class="col-sm-4 text-muted">Gasto</dt>
+          <dd class="col-sm-8"><a href="{{ url_for('expenses.detail', expense_id=payment.expense_id) }}">{{ payment.expense.folio }}</a></dd>
+          <dt class="col-sm-4 text-muted">Cuenta</dt>
+          <dd class="col-sm-8"><a href="{{ url_for('bank_accounts.detail', account_id=payment.bank_account_id) }}">{{ payment.bank_account.account_name }}</a></dd>
+          <dt class="col-sm-4 text-muted">Fecha de pago</dt>
+          <dd class="col-sm-8">{{ payment.payment_date.strftime('%Y-%m-%d %H:%M') if payment.payment_date else '—' }}</dd>
+        </dl>
+        <hr>
+        <div class="d-flex flex-wrap gap-2">
+          {% if payment.status.value == 'PENDING' %}
+            <form method="post" action="{{ url_for('payments.approve', payment_id=payment.id) }}">
+              <button class="btn btn-info"><i class="bi bi-check2-circle"></i> Aprobar</button>
+            </form>
+          {% endif %}
+          {% if payment.status.value == 'APPROVED' %}
+            <form method="post" action="{{ url_for('payments.execute', payment_id=payment.id) }}"
+                  onsubmit="return confirm('¿Ejecutar el pago? Se descontará del saldo de la cuenta.');">
+              <button class="btn btn-success"><i class="bi bi-cash-coin"></i> Marcar como Pagado</button>
+            </form>
+          {% endif %}
+          {% if payment.status.value != 'CANCELLED' %}
+            <form method="post" action="{{ url_for('payments.cancel', payment_id=payment.id) }}"
+                  onsubmit="return confirm('¿Cancelar este pago?{% if payment.status.value == 'PAID' %} Se reintegrará el saldo a la cuenta.{% endif %}');">
+              <button class="btn btn-outline-danger"><i class="bi bi-x-circle"></i> Cancelar</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-clock-history"></i> Historial de estados</div>
+      <ul class="list-group list-group-flush">
+        {% for h in history %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span>
+            {{ status_badge(h.previous_status) if h.previous_status }}
+            {% if h.previous_status %}<i class="bi bi-arrow-right mx-1"></i>{% endif %}
+            {{ status_badge(h.new_status) }}
+          </span>
+          <small class="text-muted">{{ h.changed_at.strftime('%Y-%m-%d %H:%M') }}</small>
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted">Sin historial.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
