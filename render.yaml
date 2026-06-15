@@ -18,6 +18,11 @@ services:
     startCommand: "gunicorn wsgi:app --workers 2 --timeout 60"
     healthCheckPath: /healthz
     envVars:
+      # Pin Python: SQLAlchemy 2.0.x's typed `Mapped[X | None]` annotations
+      # break on Python 3.14 (Render's current default). 3.11.9 is the tested
+      # runtime. Also enforced by the .python-version file.
+      - key: PYTHON_VERSION
+        value: "3.11.9"
       - key: FLASK_ENV
         value: production
       - key: SECRET_KEY
